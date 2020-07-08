@@ -24,7 +24,7 @@ class Part1Tests(unittest.TestCase):
         self.assertEqual(result_output, expected_output)
     
     def test_function_3_correct_output_2(self):
-        result_output = simple_functions.function_3_1("9.00")
+        result_output = simple_functions.function_3("9.00")
         expected_output = "x = 9.00"
         self.assertEqual(result_output, expected_output)
     
