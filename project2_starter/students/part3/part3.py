@@ -42,7 +42,7 @@ def convert_time(iso_string):
         A date formatted like: Weekday Date Month Year
     """
     d = datetime.strptime(iso_string, "%Y-%m-%dT%H:%M:%S%z")
-    return d.strftime('%H:%M:%S')
+    return d.strftime('%H:%M')
 
     # 2020-06-21T07:00:00+08:00
     #  Monday 22 June 2020.
@@ -88,11 +88,21 @@ rain_hr = 0
 rain_no = 0
 day_hrs = 0
 night_hr = 0
+
 with open(forecast_file) as json_file:
     json_data = json.load(json_file)
+
+    if forecast_file == "data/historical_24hours_a.json" or forecast_file == "data/historical_24hours_b.json":
+        file_hrs = "24"
+    elif forecast_file == "data/historical_6hours.json":
+        file_hrs = "6"
+    else:
+        pass
+
     for hour in json_data:
         date = convert_date(hour['LocalObservationDateTime'])
         time = convert_time(hour['LocalObservationDateTime'])
+        print(time)
         weather_text=hour['WeatherText']
         # print(weather_text)
         UV=hour['UVIndex']
@@ -107,7 +117,7 @@ with open(forecast_file) as json_file:
         rain = hour['PrecipitationSummary']['Precipitation']['Metric']['Value']
 
         print(f"Rain: {rain}, total: {rain_tot}")
-        print(rain_hr)
+        print(f"Rain hours {rain_hr}")
         if is_Rain == True:
             if rain !=0:
                 rain_tot += rain
@@ -118,6 +128,7 @@ with open(forecast_file) as json_file:
         else:
             rain_no += 1
             print("no rain")
+
         if is_Day == True:
             day_hrs += 1
         else:
@@ -133,7 +144,6 @@ with open(forecast_file) as json_file:
             date_UV = date
             time_UV = time    
         
-
         if tot_min < temp:
             tot_min = tot_min
         else: 
@@ -148,22 +158,19 @@ with open(forecast_file) as json_file:
             date_high = date
             max_temp_time = time
         
-
         weather_text_ls.append(weather_text)
         time_ls.append(time)
         Days.append(date)
         temp_list.append(temp)
         min_temp_rf_list.append(min_temp_rf)
 
-    high_UV = f"The highest UV will be {max_UV} on {date_UV} at {time_UV} and will last for {UV_hours} hours.\n"
-    low_temp = f"\n    The lowest temperature will be {format_temperature(tot_min)}, and will occur on {date_low} at {min_temp_time}.\n"
-    high_temp = f"    The highest temperature will be {format_temperature(tot_max)}, and will occur on {date_high} at {max_temp_time}.\n" 
-
-    rain_fell =  f"Rain fall in past X hours: {rain_tot}mm"
-    rain_hours = f"Rain lasted a total of {rain_hr}hrs over the past 24 hours"
-    day_hours = f"There were {day_hrs}hrs of daylight in the past 24hours"
+    high_UV = f"The highest UV will be {max_UV} on {date_UV} at {time_UV} and will last for {UV_hours} hours."
+    low_temp = f"\nThe lowest temperature will be {format_temperature(tot_min)}, and will occur on {date_low} at {min_temp_time}."
+    high_temp = f"\nThe highest temperature will be {format_temperature(tot_max)}, and will occur on {date_high} at {max_temp_time}." 
+    rain_fell =  f"\nRain fall in past {file_hrs} hours: {rain_tot} mm"
+    rain_hours = f"\nRain lasted a total of {rain_hr}hrs over the past {file_hrs} hours"
+    day_hours = f"\nThere were {day_hrs}hrs of daylight in the past {file_hrs} hours"
     # {night_hr}night"
-
 
     print(high_UV)
     print(low_temp)
@@ -172,22 +179,25 @@ with open(forecast_file) as json_file:
     print(rain_hours)
     print(day_hours)
 
-    df.update({"weather_text": weather_text_ls})
+    final_output = high_UV + low_temp + high_temp + rain_fell + rain_hours + day_hours
+
+    df.update({"Weather Categories": weather_text_ls})
     df.update({"time": time_ls})
     df.update({"Day": Days})
-    df.update({"temperature": temp_list})
-    df.update({"min_temp_rf": min_temp_rf_list})
+    df.update({"Temperature": temp_list})
+    df.update({"Min temp rf": min_temp_rf_list})
     
-
+with open("day_summary.txt", "w", encoding='utf8' ) as txt_file:
+    for item in final_output:
+        txt_file.write(item)
 
 # A single graph that contains two box plots, one for the temperature and one for the real feel temperature.
-fig_1 = px.box(df, y=["min_temp", "min_temp_rf"], title = "Historical 6 hours - Minimum and Real Feel Temperatures")
+fig_1 = px.box(df, y=["Temperature", "Min temp rf"], title = f"Historical {file_hrs} hours - Minimum and Real Feel Temperatures")
 fig_1.update_layout(
     yaxis_title="Temperature (deg)",
-
 )
-# fig_1.show()
+fig_1.show()
 
 # A bar graph showing the number of times each “WeatherText” category occurs
-fig_2 = px.bar(df, x="weather_text", title = "Historical 6 hours")
-# fig_2.show()
+fig_2 = px.bar(df, x="Weather Categories", title = f"Historical {file_hrs} hours - WeatherText Category count")#
+fig_2.show()

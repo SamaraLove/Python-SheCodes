@@ -52,22 +52,29 @@ def convert_f_to_c(temp_in_farenheit):
 
     return output                                                         
 
-forecast_file = "data/forecast_5days_a.json"
+# forecast_file = "data/forecast_5days_a.json"
+# forecast_file = "data/forecast_5days_b.json"
+forecast_file = "data/forecast_10days.json"
 
-# pd.read_json (r'data/forecast_5days_a.json')
 
-
-# json_data = json.load(json_file)
-        
 df = {}
 Days =[]
 min_list =[]
 max_list = []
 min_temp_rf_list = []
 min_temp_rfs_list = []
-# df.update({'temperature': ['0°C', '10°C', '20°C', '30°C', '40°C']})
+
+
 
 with open(forecast_file) as json_file:
+
+    if forecast_file == "data/forecast_5days_a.json" or forecast_file == "data/forecast_5days_b.json":
+        file_hrs = "5"
+    elif forecast_file == "data/forecast_10days.json":
+        file_hrs = "10"
+    else:
+        pass
+
     json_data = json.load(json_file)
     for day in json_data['DailyForecasts']:
         Date = convert_date(day['Date'])
@@ -91,13 +98,13 @@ with open(forecast_file) as json_file:
     # df = {"min_temp": min_list}
     print(df)
 
-fig_1 = px.line(df, x="Day", y=["min_temp", "max_temp"], title = "Daily Forecast")
+fig_1 = px.line(df, x="Day", y=["min_temp", "max_temp"], title = f"Daily Forecast {file_hrs} hours")
 fig_1.show()
 
 
-fig_2 = px.scatter(df, x="Day", y=["min_temp", "min_temp_rf","min_temp_rfs"], title = "Daily Forecast - Minimum temperatures")
-# fig_2.update_layout(
-#     yaxis_title="Temperature (deg)",
+fig_2 = px.scatter(df, x="Day", y=["min_temp", "min_temp_rf","min_temp_rfs"], title = f"Daily Forecast {file_hrs} hours - Minimum temperatures")
+fig_2.update_layout(
+    yaxis_title="Temperature (deg)",
 
-# )
+)
 fig_2.show()
